@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import TabBar from '../components/TabBar';
 import { useTheme } from '../services/themeService';
@@ -135,11 +135,6 @@ export default function NotificationsScreen() {
     }
   };
 
-  // For debugging
-  const getNotificationCount = () => {
-    return `${notifications.length} notifications loaded`;
-  };
-
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
@@ -149,23 +144,26 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>Notifications</Text>
         {notifications.length > 0 && (
-          <TouchableOpacity onPress={handleMarkAllAsRead}>
-            <Text style={[styles.markAllButton, { color: theme.primary }]}>Mark all as read</Text>
+          <TouchableOpacity 
+            style={styles.markAllButton}
+            onPress={handleMarkAllAsRead}
+          >
+            <Text style={{ color: theme.primary, fontSize: 14, fontWeight: '600' }}>
+              Mark all as read
+            </Text>
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Debug information */}
-      <View style={[styles.debugInfo, { backgroundColor: isDarkMode ? '#444' : '#eee' }]}>
-        <Text style={[styles.debugText, { color: theme.text }]}>
-          Theme: {isDarkMode ? 'Dark' : 'Light'} | {getNotificationCount()}
-        </Text>
-        {error && <Text style={{ color: theme.error }}>{error}</Text>}
-      </View>
+      {error && (
+        <View style={[styles.errorContainer, { backgroundColor: theme.error + '20' }]}>
+          <Text style={{ color: theme.error, fontSize: 14 }}>{error}</Text>
+        </View>
+      )}
 
       {notifications.length > 0 ? (
         <FlatList
@@ -180,6 +178,11 @@ export default function NotificationsScreen() {
                   backgroundColor: theme.card,
                   borderLeftColor: item.read ? theme.border : theme.primary,
                   borderLeftWidth: 4,
+                  shadowColor: isDarkMode ? '#000' : '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: isDarkMode ? 0.3 : 0.1,
+                  shadowRadius: 4,
+                  elevation: 3,
                 }
               ]}
               onPress={() => handleMarkAsRead(item.id)}
@@ -223,7 +226,7 @@ export default function NotificationsScreen() {
       )}
       
       <TabBar />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -236,15 +239,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    paddingTop: 60,
+    paddingTop: 16,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
   },
   markAllButton: {
-    fontSize: 14,
-    fontWeight: '600',
+    padding: 8,
   },
   listContainer: {
     padding: 16,
@@ -285,13 +287,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 20,
   },
-  debugInfo: {
-    padding: 10,
-    margin: 10,
+  errorContainer: {
+    margin: 16,
+    padding: 12,
     borderRadius: 8,
-  },
-  debugText: {
-    fontSize: 12,
   },
   createButton: {
     paddingHorizontal: 16,

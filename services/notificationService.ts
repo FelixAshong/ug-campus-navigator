@@ -138,7 +138,10 @@ export async function getUnreadCount(): Promise<number> {
 }
 
 // Create a sample notification for testing
-export async function createSampleNotification(title: string, message: string): Promise<boolean> {
+export async function createSampleNotification(
+  title: string = 'Welcome to UG Campus Navigator', 
+  message: string = 'Explore the University of Ghana campus with ease. Find locations, get directions, and discover campus events.'
+): Promise<boolean> {
   const newNotification: Notification = {
     id: Date.now().toString(),
     title,

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, TouchableOpacity, Switch } from 'react-native';
 import MapView from 'react-native-maps';
-import { useTheme } from '../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 import { locations } from '../data/locations';
 import TabBar from '../components/TabBar';
+import { useTheme } from '../services/themeService';
 
 type Category = {
   id: string;
@@ -14,7 +14,7 @@ type Category = {
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const { colors } = useTheme();
+  const { theme, isDarkMode, toggleTheme } = useTheme();
 
   const filteredLocations = selectedCategory
     ? locations.filter((location) => location.category === selectedCategory)
@@ -32,7 +32,23 @@ export default function HomeScreen() {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.header, { backgroundColor: theme.primary }]}>
+        <Text style={[styles.headerTitle, { color: theme.background }]}>
+          UG Campus Navigator
+        </Text>
+        <View style={styles.themeSwitchContainer}>
+          <Ionicons name="sunny" size={20} color={theme.background} style={styles.themeIcon} />
+          <Switch
+            value={isDarkMode}
+            onValueChange={toggleTheme}
+            trackColor={{ false: '#f4f3f4', true: theme.accent + '80' }}
+            thumbColor={isDarkMode ? theme.accent : '#f4f3f4'}
+          />
+          <Ionicons name="moon" size={20} color={theme.background} style={styles.themeIcon} />
+        </View>
+      </View>
+
       <MapView
         style={styles.map}
         initialRegion={{
@@ -43,7 +59,7 @@ export default function HomeScreen() {
         }}
       />
 
-      <View style={[styles.categoriesContainer, { backgroundColor: colors.card }]}>
+      <View style={[styles.categoriesContainer, { backgroundColor: theme.card }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {categories.map((category) => (
             <TouchableOpacity
@@ -53,8 +69,9 @@ export default function HomeScreen() {
                 {
                   backgroundColor:
                     selectedCategory === category.id
-                      ? colors.primary
-                      : colors.background,
+                      ? theme.primary
+                      : theme.background,
+                  borderColor: theme.border,
                 },
               ]}
               onPress={() =>
@@ -68,8 +85,8 @@ export default function HomeScreen() {
                 size={24}
                 color={
                   selectedCategory === category.id
-                    ? colors.background
-                    : colors.text
+                    ? theme.background
+                    : theme.text
                 }
               />
               <Text
@@ -78,8 +95,8 @@ export default function HomeScreen() {
                   {
                     color:
                       selectedCategory === category.id
-                        ? colors.background
-                        : colors.text,
+                        ? theme.background
+                        : theme.text,
                   },
                 ]}
               >
@@ -90,22 +107,24 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
-      <View style={[styles.featuredContainer, { backgroundColor: colors.card }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+      <View style={[styles.featuredContainer, { backgroundColor: theme.card }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>
           Featured Locations
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {filteredLocations.slice(0, 5).map((location) => (
             <TouchableOpacity
               key={location.id}
-              style={[styles.locationCard, { backgroundColor: colors.background }]}
+              style={[styles.locationCard, { backgroundColor: theme.background, borderColor: theme.border }]}
             >
-              <Ionicons name="location" size={24} color={colors.primary} />
-              <Text style={[styles.locationName, { color: colors.text }]}>
+              <Ionicons name="location" size={24} color={theme.primary} />
+              <Text style={[styles.locationName, { color: theme.text }]}>
                 {location.name}
               </Text>
-              <Text style={[styles.locationDesc, { color: colors.text }]}>
-                {location.description}
+              <Text style={[styles.locationDesc, { color: theme.text + 'CC' }]}>
+                {location.description.length > 60 
+                  ? location.description.substring(0, 60) + '...'
+                  : location.description}
               </Text>
             </TouchableOpacity>
           ))}
@@ -121,6 +140,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 15,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  themeSwitchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  themeIcon: {
+    marginHorizontal: 5,
+  },
   map: {
     flex: 1,
   },
@@ -135,14 +173,15 @@ const styles = StyleSheet.create({
     padding: 12,
     marginRight: 8,
     borderRadius: 12,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.1,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 3,
   },
   categoryText: {
     marginLeft: 8,
@@ -162,14 +201,15 @@ const styles = StyleSheet.create({
     padding: 16,
     marginRight: 16,
     borderRadius: 12,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.1,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 3,
   },
   locationName: {
     fontSize: 16,

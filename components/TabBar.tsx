@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../hooks/useTheme';
 import { useRouter, usePathname } from 'expo-router';
+import { useTheme } from '../services/themeService';
 
 type Route = {
   name: string;
@@ -18,12 +18,12 @@ const routes: Route[] = [
 ];
 
 export default function TabBar() {
-  const { colors } = useTheme();
+  const { theme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+    <View style={[styles.container, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
       {routes.map((route) => {
         const isActive = 
           route.path === '/' 
@@ -39,12 +39,12 @@ export default function TabBar() {
             <Ionicons
               name={route.icon}
               size={24}
-              color={isActive ? colors.primary : colors.text}
+              color={isActive ? theme.primary : theme.gray}
             />
             <Text
               style={[
                 styles.tabLabel,
-                { color: isActive ? colors.primary : colors.text },
+                { color: isActive ? theme.primary : theme.gray },
               ]}
             >
               {route.name}
@@ -61,6 +61,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     height: 60,
     borderTopWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   tabButton: {
     flex: 1,
@@ -70,5 +78,6 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 12,
     marginTop: 4,
+    fontWeight: '500',
   },
 }); 

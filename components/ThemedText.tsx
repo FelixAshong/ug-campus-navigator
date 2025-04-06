@@ -1,60 +1,47 @@
-import { Text, type TextProps, StyleSheet } from 'react-native';
+import { Text, StyleSheet, TextProps } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 
-import { useThemeColor } from '@/hooks/useThemeColor';
+interface ThemedTextProps extends TextProps {
+  type?: 'body' | 'title' | 'subtitle' | 'link';
+}
 
-export type ThemedTextProps = TextProps & {
-  lightColor?: string;
-  darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
-};
-
-export function ThemedText({
-  style,
-  lightColor,
-  darkColor,
-  type = 'default',
-  ...rest
-}: ThemedTextProps) {
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
-
+export function ThemedText({ type = 'body', style, ...props }: ThemedTextProps) {
+  const { colors } = useTheme();
+  
+  let textStyle = styles.body;
+  
+  switch (type) {
+    case 'title':
+      textStyle = styles.title;
+      break;
+    case 'subtitle':
+      textStyle = styles.subtitle;
+      break;
+    case 'link':
+      textStyle = styles.link;
+      break;
+  }
+  
   return (
-    <Text
-      style={[
-        { color },
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? styles.link : undefined,
-        style,
-      ]}
-      {...rest}
-    />
+    <Text style={[textStyle, { color: colors.text }, style]} {...props} />
   );
 }
 
 const styles = StyleSheet.create({
-  default: {
+  body: {
     fontSize: 16,
-    lineHeight: 24,
-  },
-  defaultSemiBold: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
-    lineHeight: 32,
   },
   subtitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '500',
   },
   link: {
-    lineHeight: 30,
     fontSize: 16,
-    color: '#0a7ea4',
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
 });

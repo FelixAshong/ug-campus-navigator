@@ -1,112 +1,104 @@
 #!/usr/bin/env node
 
 /**
- * This script is used to reset the project to a blank state.
- * It deletes or moves the /app, /components, /hooks, /scripts, and /constants directories to /app-example based on user input and creates a new /app directory with an index.tsx and _layout.tsx file.
- * You can remove the `reset-project` script from package.json and safely delete this file after running it.
+ * Reset Project Script
+ * This script provides a complete reset and cleanup for the project.
+ * It removes node_modules, clears caches, reinstalls dependencies,
+ * and properly configures the project.
  */
 
-const fs = require("fs");
-const path = require("path");
-const readline = require("readline");
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
-const root = process.cwd();
-const oldDirs = ["app", "components", "hooks", "constants", "scripts"];
-const exampleDir = "app-example";
-const newAppDir = "app";
-const exampleDirPath = path.join(root, exampleDir);
-
-const indexContent = `import { Text, View } from "react-native";
-
-export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
-}
-`;
-
-const layoutContent = `import { Stack } from "expo-router";
-
-export default function RootLayout() {
-  return <Stack />;
-}
-`;
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-const moveDirectories = async (userInput) => {
+const isWindows = os.platform() === 'win32';
+const command = (cmd) => {
   try {
-    if (userInput === "y") {
-      // Create the app-example directory
-      await fs.promises.mkdir(exampleDirPath, { recursive: true });
-      console.log(`📁 /${exampleDir} directory created.`);
-    }
-
-    // Move old directories to new app-example directory or delete them
-    for (const dir of oldDirs) {
-      const oldDirPath = path.join(root, dir);
-      if (fs.existsSync(oldDirPath)) {
-        if (userInput === "y") {
-          const newDirPath = path.join(root, exampleDir, dir);
-          await fs.promises.rename(oldDirPath, newDirPath);
-          console.log(`➡️ /${dir} moved to /${exampleDir}/${dir}.`);
-        } else {
-          await fs.promises.rm(oldDirPath, { recursive: true, force: true });
-          console.log(`❌ /${dir} deleted.`);
-        }
-      } else {
-        console.log(`➡️ /${dir} does not exist, skipping.`);
-      }
-    }
-
-    // Create new /app directory
-    const newAppDirPath = path.join(root, newAppDir);
-    await fs.promises.mkdir(newAppDirPath, { recursive: true });
-    console.log("\n📁 New /app directory created.");
-
-    // Create index.tsx
-    const indexPath = path.join(newAppDirPath, "index.tsx");
-    await fs.promises.writeFile(indexPath, indexContent);
-    console.log("📄 app/index.tsx created.");
-
-    // Create _layout.tsx
-    const layoutPath = path.join(newAppDirPath, "_layout.tsx");
-    await fs.promises.writeFile(layoutPath, layoutContent);
-    console.log("📄 app/_layout.tsx created.");
-
-    console.log("\n✅ Project reset complete. Next steps:");
-    console.log(
-      `1. Run \`npx expo start\` to start a development server.\n2. Edit app/index.tsx to edit the main screen.${
-        userInput === "y"
-          ? `\n3. Delete the /${exampleDir} directory when you're done referencing it.`
-          : ""
-      }`
-    );
+    console.log(`\n🚀 Running: ${cmd}\n`);
+    execSync(cmd, { stdio: 'inherit' });
+    return true;
   } catch (error) {
-    console.error(`❌ Error during script execution: ${error.message}`);
+    console.error(`\n❌ Error executing: ${cmd}\n`);
+    console.error(error.message);
+    return false;
   }
 };
 
-rl.question(
-  "Do you want to move existing files to /app-example instead of deleting them? (Y/n): ",
-  (answer) => {
-    const userInput = answer.trim().toLowerCase() || "y";
-    if (userInput === "y" || userInput === "n") {
-      moveDirectories(userInput).finally(() => rl.close());
-    } else {
-      console.log("❌ Invalid input. Please enter 'Y' or 'N'.");
-      rl.close();
-    }
-  }
-);
+// Colors for terminal output
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  green: '\x1b[32m',
+  cyan: '\x1b[36m',
+  yellow: '\x1b[33m',
+  red: '\x1b[31m',
+};
+
+console.log(`\n${colors.bright}${colors.cyan}=== UG Campus Navigator Project Reset ====${colors.reset}\n`);
+console.log(`${colors.yellow}This script will reset the project to a clean state.${colors.reset}`);
+console.log(`${colors.yellow}It will delete node_modules, clear caches, and reinstall dependencies.${colors.reset}\n`);
+
+// Step 1: Kill any running processes
+console.log(`\n${colors.bright}${colors.green}Step 1: Killing running processes${colors.reset}`);
+if (isWindows) {
+  command('taskkill /F /IM node.exe /T');
+} else {
+  command('killall -9 node || true');
+}
+
+// Step 2: Clear Watchman watches (if available)
+console.log(`\n${colors.bright}${colors.green}Step 2: Clearing Watchman watches${colors.reset}`);
+if (!isWindows) {
+  command('watchman watch-del-all || true');
+}
+
+// Step 3: Remove metro cache
+console.log(`\n${colors.bright}${colors.green}Step 3: Remove Metro bundler cache${colors.reset}`);
+const tempDir = os.tmpdir();
+if (isWindows) {
+  command(`if exist "${tempDir}\\metro-*" rmdir /s /q "${tempDir}\\metro-*"`);
+} else {
+  command(`rm -rf ${tempDir}/metro-* || true`);
+}
+
+// Step 4: Remove node_modules
+console.log(`\n${colors.bright}${colors.green}Step 4: Removing node_modules${colors.reset}`);
+command(isWindows ? 'if exist node_modules rmdir /s /q node_modules' : 'rm -rf node_modules');
+
+// Step 5: Remove lock files
+console.log(`\n${colors.bright}${colors.green}Step 5: Removing lock files${colors.reset}`);
+if (fs.existsSync('package-lock.json')) {
+  fs.unlinkSync('package-lock.json');
+  console.log('Removed package-lock.json');
+}
+if (fs.existsSync('yarn.lock')) {
+  fs.unlinkSync('yarn.lock');
+  console.log('Removed yarn.lock');
+}
+
+// Step 6: Clear React Native cache
+console.log(`\n${colors.bright}${colors.green}Step 6: Clearing React Native cache${colors.reset}`);
+command(isWindows ? 'if exist .expo rmdir /s /q .expo' : 'rm -rf .expo');
+
+// Step 7: Clean npm cache
+console.log(`\n${colors.bright}${colors.green}Step 7: Cleaning npm cache${colors.reset}`);
+command('npm cache clean --force');
+
+// Step 8: Install dependencies
+console.log(`\n${colors.bright}${colors.green}Step 8: Reinstalling dependencies${colors.reset}`);
+if (!command('npm install')) {
+  console.error(`\n${colors.red}Failed to reinstall dependencies. Project reset incomplete.${colors.reset}`);
+  process.exit(1);
+}
+
+// Step 9: Install Expo properly
+console.log(`\n${colors.bright}${colors.green}Step 9: Installing Expo and fixing dependencies${colors.reset}`);
+command('npx expo install --check');
+
+// Step 10: Run expo doctor to fix any issues
+console.log(`\n${colors.bright}${colors.green}Step 10: Running expo doctor${colors.reset}`);
+command('npx expo doctor --fix-dependencies');
+
+console.log(`\n${colors.bright}${colors.green}Project has been reset successfully!${colors.reset}`);
+console.log(`${colors.cyan}You can now run 'npm start' to start the project.${colors.reset}\n`);

@@ -7,14 +7,24 @@
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ug.campusnavigator",
+      "config": {
+        "googleMapsApiKey": "AIzaSyB2lgw3MrgkJzcL3gSQNp_yapbL9jwnBeg"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.ug.campusnavigator",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyB2lgw3MrgkJzcL3gSQNp_yapbL9jwnBeg"
+        }
       }
     },
     "web": {
@@ -24,6 +34,12 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+        }
+      ],
       [
         "expo-splash-screen",
         {

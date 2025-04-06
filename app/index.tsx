@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Text, TouchableOpacity, Switch, Image, Linking } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, ScrollView, Text, TouchableOpacity, Switch, Image, Linking, Dimensions, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { locations } from '../data/locations';
 import TabBar from '../components/TabBar';
 import { useTheme } from '../services/themeService';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 
 type Category = {
   id: string;
@@ -28,11 +28,45 @@ type Event = {
   description: string;
 };
 
+type Announcement = {
+  id: string;
+  title: string;
+  image: string;
+  description: string;
+};
+
+const { width } = Dimensions.get('window');
+
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const scrollX = useRef(new Animated.Value(0)).current;
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  const router = useRouter();
+
+  // Featured announcements with images for slideshow
+  const announcements: Announcement[] = [
+    {
+      id: '1',
+      title: 'Welcome to University of Ghana',
+      image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/University_of_Ghana_-_panoramio.jpg/1200px-University_of_Ghana_-_panoramio.jpg',
+      description: 'Discover the premier educational institution in Ghana',
+    },
+    {
+      id: '2',
+      title: 'New Library Hours',
+      image: 'https://ug.edu.gh/sites/default/files/field/image/Balme%20Library%20UG.jpg',
+      description: 'The Balme Library is now open 24/7 for students during exam period',
+    },
+    {
+      id: '3',
+      title: 'Campus Shuttle Service',
+      image: 'https://media.premiumtimesng.com/wp-content/files/2023/09/University-Of-Ghana.jpg',
+      description: 'New shuttle routes available across campus',
+    },
+  ];
 
   // Mock data for events
   const events: Event[] = [
@@ -49,6 +83,13 @@ export default function HomeScreen() {
       date: '2024-04-20',
       location: 'Sports Complex',
       description: 'Annual inter-faculty sports competition',
+    },
+    {
+      id: '3',
+      title: 'Technology Workshop',
+      date: '2024-04-25',
+      location: 'Computer Science Department',
+      description: 'Learn about the latest technologies from industry experts',
     },
   ];
 
@@ -74,9 +115,33 @@ export default function HomeScreen() {
     },
     {
       id: 'cafeteria',
-      name: 'Cafeteria',
+      name: 'Dining',
       icon: 'restaurant',
       action: () => {},
+    },
+    {
+      id: 'timetable',
+      name: 'Timetable',
+      icon: 'calendar',
+      action: () => {},
+    },
+    {
+      id: 'wifi',
+      name: 'WiFi',
+      icon: 'wifi',
+      action: () => {},
+    },
+    {
+      id: 'news',
+      name: 'News',
+      icon: 'newspaper',
+      action: () => {},
+    },
+    {
+      id: 'map',
+      name: 'Full Map',
+      icon: 'map',
+      action: () => router.push('/search'),
     },
   ];
 
@@ -91,7 +156,32 @@ export default function HomeScreen() {
       const location = await Location.getCurrentPositionAsync({});
       setUserLocation(location);
     })();
-  }, []);
+
+    // Auto-scroll slideshow
+    const interval = setInterval(() => {
+      setCurrentImageIndex(prevIndex => 
+        prevIndex === announcements.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [announcements.length]);
+
+  // Monitor slide changes
+  useEffect(() => {
+    if (scrollX) {
+      const listener = scrollX.addListener(({ value }) => {
+        const index = Math.round(value / width);
+        if (index !== currentImageIndex) {
+          setCurrentImageIndex(index);
+        }
+      });
+      
+      return () => {
+        scrollX.removeListener(listener);
+      };
+    }
+  }, [scrollX, currentImageIndex, width]);
 
   const filteredLocations = selectedCategory
     ? locations.filter((location) => location.category === selectedCategory)
@@ -127,6 +217,47 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView style={styles.scrollView}>
+        {/* Slideshow Section */}
+        <View style={styles.slideshowContainer}>
+          <Animated.ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+              { useNativeDriver: true }
+            )}
+            scrollEventThrottle={16}
+          >
+            {announcements.map((item, index) => (
+              <View key={item.id} style={styles.slide}>
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.slideImage}
+                  resizeMode="cover"
+                />
+                <View style={[styles.slideTextContainer, { backgroundColor: theme.primary + 'D9' }]}>
+                  <Text style={styles.slideTitle}>{item.title}</Text>
+                  <Text style={styles.slideDescription}>{item.description}</Text>
+                </View>
+              </View>
+            ))}
+          </Animated.ScrollView>
+          
+          {/* Pagination dots */}
+          <View style={styles.paginationContainer}>
+            {announcements.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.paginationDot,
+                  { backgroundColor: index === currentImageIndex ? theme.primary : theme.background + '80' }
+                ]}
+              />
+            ))}
+          </View>
+        </View>
+
         {/* Quick Actions */}
         <View style={[styles.section, { backgroundColor: theme.card }]}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Quick Actions</Text>
@@ -142,31 +273,6 @@ export default function HomeScreen() {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-
-        {/* Map Section */}
-        <View style={[styles.mapContainer, { backgroundColor: theme.card }]}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Campus Map</Text>
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: 5.6502,
-              longitude: -0.1864,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
-          >
-            {userLocation && (
-              <Marker
-                coordinate={{
-                  latitude: userLocation.coords.latitude,
-                  longitude: userLocation.coords.longitude,
-                }}
-                title="Your Location"
-                pinColor={theme.primary}
-              />
-            )}
-          </MapView>
         </View>
 
         {/* Categories */}
@@ -221,14 +327,23 @@ export default function HomeScreen() {
 
         {/* Featured Locations */}
         <View style={[styles.section, { backgroundColor: theme.card }]}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            Featured Locations
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>
+              Featured Locations
+            </Text>
+            <TouchableOpacity onPress={() => router.push('/search')}>
+              <Text style={{ color: theme.primary }}>View All</Text>
+            </TouchableOpacity>
+          </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {filteredLocations.slice(0, 5).map((location) => (
               <TouchableOpacity
                 key={location.id}
                 style={[styles.locationCard, { backgroundColor: theme.background, borderColor: theme.border }]}
+                onPress={() => router.push({
+                  pathname: '/search',
+                  params: { locationId: location.id }
+                })}
               >
                 <Ionicons name="location" size={24} color={theme.primary} />
                 <Text style={[styles.locationName, { color: theme.text }]}>
@@ -246,7 +361,12 @@ export default function HomeScreen() {
 
         {/* Campus Events */}
         <View style={[styles.section, { backgroundColor: theme.card }]}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Upcoming Events</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Upcoming Events</Text>
+            <TouchableOpacity>
+              <Text style={{ color: theme.primary }}>View All</Text>
+            </TouchableOpacity>
+          </View>
           {events.map((event) => (
             <TouchableOpacity
               key={event.id}
@@ -299,14 +419,63 @@ const styles = StyleSheet.create({
   themeIcon: {
     marginHorizontal: 5,
   },
+  slideshowContainer: {
+    height: 220,
+    position: 'relative',
+  },
+  slide: {
+    width: Dimensions.get('window').width,
+    height: 220,
+    position: 'relative',
+  },
+  slideImage: {
+    width: '100%',
+    height: '100%',
+  },
+  slideTextContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+  },
+  slideTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  slideDescription: {
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
   section: {
     padding: 16,
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
   },
   quickActionsGrid: {
     flexDirection: 'row',

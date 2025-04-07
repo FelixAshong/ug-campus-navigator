@@ -114,7 +114,6 @@ export async function getDirections(
   toLng: number,
   mode: TransportationMode = 'walking'
 ) {
-  // Get API key from app config
   const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   
   if (!apiKey) {
@@ -126,7 +125,7 @@ export async function getDirections(
   
   try {
     const response = await fetch(
-      `${baseUrl}?origin=${fromLat},${fromLng}&destination=${toLat},${toLng}&mode=${mode}&key=${apiKey}&alternatives=true&departure_time=now&traffic_model=best_guess`
+      `${baseUrl}?origin=${fromLat},${fromLng}&destination=${toLat},${toLng}&mode=${mode}&key=${apiKey}&alternatives=true&departure_time=now&traffic_model=best_guess&region=gh&language=en&units=metric`
     );
     
     const data = await response.json();
@@ -153,13 +152,16 @@ export async function getDirections(
         hasTraffic: !!durationInTraffic,
       };
     } else if (data.status === 'REQUEST_DENIED') {
-      console.error('Google Maps API request denied. Please check your API key configuration.');
+      console.error('Google Maps API request denied. Error details:', data.error_message);
       return null;
     } else if (data.status === 'ZERO_RESULTS') {
       console.warn('No route found between the specified locations');
       return null;
+    } else if (data.status === 'OVER_QUERY_LIMIT') {
+      console.error('Google Maps API quota exceeded');
+      return null;
     } else {
-      console.error('Google Maps API error:', data.status);
+      console.error('Google Maps API error:', data.status, data.error_message);
       return null;
     }
   } catch (error) {

@@ -6,6 +6,8 @@ import * as ExpoLocation from 'expo-location';
 // Favorite locations functionality
 const FAVORITES_STORAGE_KEY = 'ug_campus_navigator_favorites';
 
+export type TransportationMode = 'walking' | 'driving' | 'bicycling' | 'transit';
+
 export async function getFavoriteLocations(): Promise<string[]> {
   try {
     const favoritesJson = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
@@ -62,12 +64,18 @@ export async function getCurrentLocation() {
     }
     
     const location = await ExpoLocation.getCurrentPositionAsync({
-      accuracy: ExpoLocation.Accuracy.Balanced,
+      accuracy: ExpoLocation.Accuracy.High,
+      timeInterval: 5000,
+      distanceInterval: 10,
     });
     
     return {
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
+      accuracy: location.coords.accuracy,
+      altitude: location.coords.altitude,
+      heading: location.coords.heading,
+      speed: location.coords.speed,
     };
   } catch (error) {
     console.error('Error getting current location:', error);
@@ -75,6 +83,10 @@ export async function getCurrentLocation() {
     return {
       latitude: 5.6502,
       longitude: -0.1864,
+      accuracy: 0,
+      altitude: 0,
+      heading: 0,
+      speed: 0,
     };
   }
 }
@@ -94,10 +106,101 @@ export function searchLocations(query: string) {
   );
 }
 
-// Get directions
-export function getDirections(fromLat: number, fromLng: number, toLat: number, toLng: number) {
-  // Return URL for Google Maps directions
-  return `https://www.google.com/maps/dir/?api=1&origin=${fromLat},${fromLng}&destination=${toLat},${toLng}&travelmode=walking`;
+// Get directions with transportation mode
+export async function getDirections(
+  fromLat: number, 
+  fromLng: number, 
+  toLat: number, 
+  toLng: number,
+  mode: TransportationMode = 'walking'
+) {
+  // Get API key from app config
+  const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  
+  if (!apiKey) {
+    console.error('Google Maps API key is not configured');
+    return null;
+  }
+
+  const baseUrl = 'https://maps.googleapis.com/maps/api/directions/json';
+  
+  try {
+    const response = await fetch(
+      `${baseUrl}?origin=${fromLat},${fromLng}&destination=${toLat},${toLng}&mode=${mode}&key=${apiKey}&alternatives=true&departure_time=now&traffic_model=best_guess`
+    );
+    
+    const data = await response.json();
+    
+    if (data.status === 'OK') {
+      const route = data.routes[0];
+      const points = route.overview_polyline.points;
+      const steps = route.legs[0].steps.map((step: any) => ({
+        instruction: step.html_instructions,
+        distance: step.distance.text,
+        duration: step.duration.text,
+        startLocation: step.start_location,
+        endLocation: step.end_location,
+      }));
+      
+      // Get traffic information if available
+      const durationInTraffic = route.legs[0].duration_in_traffic?.text;
+      
+      return {
+        points,
+        steps,
+        distance: route.legs[0].distance.text,
+        duration: durationInTraffic || route.legs[0].duration.text,
+        hasTraffic: !!durationInTraffic,
+      };
+    } else if (data.status === 'REQUEST_DENIED') {
+      console.error('Google Maps API request denied. Please check your API key configuration.');
+      return null;
+    } else if (data.status === 'ZERO_RESULTS') {
+      console.warn('No route found between the specified locations');
+      return null;
+    } else {
+      console.error('Google Maps API error:', data.status);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error getting directions:', error);
+    return null;
+  }
+}
+
+// Helper function to encode a simple polyline
+function encodePolyline(points: { lat: number; lng: number }[]): string {
+  let encoded = '';
+  let lastLat = 0;
+  let lastLng = 0;
+
+  for (const point of points) {
+    const lat = Math.round(point.lat * 1e5);
+    const lng = Math.round(point.lng * 1e5);
+    
+    const dLat = lat - lastLat;
+    const dLng = lng - lastLng;
+    
+    encoded += encodeNumber(dLat) + encodeNumber(dLng);
+    
+    lastLat = lat;
+    lastLng = lng;
+  }
+  
+  return encoded;
+}
+
+function encodeNumber(num: number): string {
+  let encoded = '';
+  num = num < 0 ? ~(num << 1) : num << 1;
+  
+  while (num >= 0x20) {
+    encoded += String.fromCharCode((0x20 | (num & 0x1f)) + 63);
+    num >>= 5;
+  }
+  
+  encoded += String.fromCharCode(num + 63);
+  return encoded;
 }
 
 // Get nearby locations

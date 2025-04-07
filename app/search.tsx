@@ -8,6 +8,7 @@ import {
   Text,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { locations } from '../data/locations';
@@ -16,6 +17,7 @@ import { useTheme } from '../services/themeService';
 import * as LocationService from '../services/locationService';
 import * as SearchHistoryService from '../services/searchHistoryService';
 import { Location } from '../types/location';
+import MapNavigation from '../components/MapNavigation';
 
 export default function SearchScreen() {
   const [searchText, setSearchText] = useState('');
@@ -23,6 +25,7 @@ export default function SearchScreen() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const { theme } = useTheme();
 
   // Load recent searches and favorites on mount
@@ -117,6 +120,14 @@ export default function SearchScreen() {
     return favorites.includes(locationId);
   };
 
+  const handleLocationSelect = (location: Location) => {
+    setSelectedLocation(location);
+  };
+
+  const handleCloseMap = () => {
+    setSelectedLocation(null);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
@@ -176,6 +187,7 @@ export default function SearchScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[styles.resultItem, { backgroundColor: theme.card }]}
+              onPress={() => handleLocationSelect(item)}
             >
               <View style={styles.resultContent}>
                 <Text style={[styles.resultName, { color: theme.text }]}>
@@ -240,6 +252,19 @@ export default function SearchScreen() {
           )}
         />
       )}
+      
+      <Modal
+        visible={!!selectedLocation}
+        animationType="slide"
+        onRequestClose={handleCloseMap}
+      >
+        {selectedLocation && (
+          <MapNavigation
+            destination={selectedLocation}
+            onClose={handleCloseMap}
+          />
+        )}
+      </Modal>
       
       <TabBar />
     </View>

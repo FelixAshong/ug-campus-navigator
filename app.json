@@ -7,13 +7,22 @@
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ug.campusnavigator",
       "config": {
         "googleMapsApiKey": "AIzaSyB2lgw3MrgkJzcL3gSQNp_yapbL9jwnBeg"
-      }
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to provide navigation to campus locations.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to provide navigation to campus locations.",
+        "UIBackgroundModes": ["location"],
+        "LSApplicationQueriesSchemes": ["googlechromes", "googlemaps"]
+      },
+      "usesIcloudStorage": true,
+      "usesAppleSignIn": true,
+      "usesNonExemptEncryption": false
     },
     "android": {
       "adaptiveIcon": {
@@ -25,7 +34,11 @@
         "googleMaps": {
           "apiKey": "AIzaSyB2lgw3MrgkJzcL3gSQNp_yapbL9jwnBeg"
         }
-      }
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",

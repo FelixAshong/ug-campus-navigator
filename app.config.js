@@ -8,17 +8,19 @@ export default {
   splash: {
     image: './assets/splash.png',
     resizeMode: 'contain',
-    backgroundColor: '#ffffff'
+    backgroundColor: '#003366' // University of Ghana blue
   },
   updates: {
     fallbackToCacheTimeout: 0
   },
   assetBundlePatterns: [
-    '**/*'
+    '**/*',
+    'assets/images/**/*',
+    'assets/**/*'
   ],
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'com.ugcampuspilot.navigator',
+    bundleIdentifier: 'com.ug.campusnavigator',
     config: {
       googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
     },
@@ -31,9 +33,9 @@ export default {
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#FFFFFF'
+      backgroundColor: '#ffffff'
     },
-    package: 'com.ugcampuspilot.navigator',
+    package: 'com.ug.campusnavigator',
     config: {
       googleMaps: {
         apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
@@ -49,6 +51,7 @@ export default {
     favicon: './assets/favicon.png'
   },
   plugins: [
+    'expo-router',
     [
       'expo-location',
       {
@@ -63,5 +66,8 @@ export default {
     }
   },
   scheme: "ug-campus-navigator",
-  newArchEnabled: true
+  newArchEnabled: true,
+  experiments: {
+    typedRoutes: true
+  }
 }; 

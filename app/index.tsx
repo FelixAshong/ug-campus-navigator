@@ -51,20 +51,32 @@ export default function HomeScreen() {
     {
       id: '1',
       title: 'Welcome to University of Ghana',
-      image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/University_of_Ghana_-_panoramio.jpg/1200px-University_of_Ghana_-_panoramio.jpg',
+      image: require('../assets/images/ug/campus-view.jpg'),
       description: 'Discover the premier educational institution in Ghana',
     },
     {
       id: '2',
       title: 'New Library Hours',
-      image: 'https://ug.edu.gh/sites/default/files/field/image/Balme%20Library%20UG.jpg',
+      image: require('../assets/images/ug/balme-library.jpg'),
       description: 'The Balme Library is now open 24/7 for students during exam period',
     },
     {
       id: '3',
       title: 'Campus Shuttle Service',
-      image: 'https://media.premiumtimesng.com/wp-content/files/2023/09/University-Of-Ghana.jpg',
+      image: require('../assets/images/ug/shuttle.jpg'),
       description: 'New shuttle routes available across campus',
+    },
+    {
+      id: '4',
+      title: 'Night Market',
+      image: require('../assets/images/ug/night.jpg'),
+      description: 'Experience the vibrant night market where students gather for food, shopping and socializing',
+    },
+    {
+      id: '5',
+      title: 'Great Hall',
+      image: require('../assets/images/ug/great-hall.jpg'),
+      description: 'The iconic Great Hall hosts major university events',
     },
   ];
 
@@ -218,21 +230,22 @@ export default function HomeScreen() {
 
       <ScrollView style={styles.scrollView}>
         {/* Slideshow Section */}
+        // In the HomeScreen component, modify the slideshow section:
         <View style={styles.slideshowContainer}>
-          <Animated.ScrollView
+          <ScrollView
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             onScroll={Animated.event(
               [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: true }
+              { useNativeDriver: false }  // Change to false
             )}
             scrollEventThrottle={16}
           >
             {announcements.map((item, index) => (
-              <View key={item.id} style={styles.slide}>
+              <View key={item.id} style={[styles.slide, { width }]}>
                 <Image
-                  source={{ uri: item.image }}
+                  source={item.image}  // Remove the uri property
                   style={styles.slideImage}
                   resizeMode="cover"
                 />
@@ -242,7 +255,7 @@ export default function HomeScreen() {
                 </View>
               </View>
             ))}
-          </Animated.ScrollView>
+          </ScrollView>
           
           {/* Pagination dots */}
           <View style={styles.paginationContainer}>
@@ -422,15 +435,19 @@ const styles = StyleSheet.create({
   slideshowContainer: {
     height: 220,
     position: 'relative',
+    width: '100%',  // Add explicit width
+    marginBottom: 10, // Add some margin for better spacing
   },
   slide: {
-    width: Dimensions.get('window').width,
+    width: width, // Use the window width constant
     height: 220,
     position: 'relative',
+    overflow: 'hidden', // Add overflow control
   },
   slideImage: {
     width: '100%',
     height: '100%',
+    resizeMode: 'cover', // Ensure consistent image scaling
   },
   slideTextContainer: {
     position: 'absolute',
@@ -593,4 +610,4 @@ const styles = StyleSheet.create({
   eventDescription: {
     fontSize: 14,
   },
-}); 
+});

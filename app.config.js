@@ -12,6 +12,7 @@ export default {
   },
   updates: {
     fallbackToCacheTimeout: 0
+    
   },
   assetBundlePatterns: [
     '**/*',

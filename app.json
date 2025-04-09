@@ -11,9 +11,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ug.campusnavigator",
-      "config": {
-        "googleMapsApiKey": "AIzaSyB2lgw3MrgkJzcL3gSQNp_yapbL9jwnBeg"
-      },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to provide navigation to campus locations.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to your location to provide navigation to campus locations.",

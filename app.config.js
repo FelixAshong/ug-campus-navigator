@@ -23,7 +23,7 @@ export default {
     supportsTablet: true,
     bundleIdentifier: 'com.ug.campusnavigator',
     config: {
-      googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
+      // googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
     },
     infoPlist: {
       NSLocationWhenInUseUsageDescription: 'This app needs access to your location to provide navigation services.',
@@ -38,9 +38,9 @@ export default {
     },
     package: 'com.ug.campusnavigator',
     config: {
-      googleMaps: {
-        apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
-      }
+      // googleMaps: {
+      //   apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
+      // }
     },
     permissions: [
       'ACCESS_COARSE_LOCATION',
@@ -61,7 +61,7 @@ export default {
     ]
   ],
   extra: {
-    googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+    // googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
     eas: {
       projectId: "your-project-id"
     }

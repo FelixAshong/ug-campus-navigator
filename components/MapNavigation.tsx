@@ -1,6 +1,6 @@
 import React, { useEffect, useState, forwardRef, useRef } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Platform, Text, Alert } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE, PROVIDER_DEFAULT } from 'react-native-maps';
+import MapboxGL from '@react-native-mapbox-gl/maps';
 import { Ionicons } from '@expo/vector-icons';
 import * as LocationService from '../services/locationService';
 import { Location } from '../types/location';
@@ -12,7 +12,7 @@ interface MapNavigationProps {
   onClose: () => void;
 }
 
-const MapNavigation = forwardRef<MapView, MapNavigationProps>(({ destination, onClose }, ref) => {
+const MapNavigation = forwardRef<MapboxGL.MapView, MapNavigationProps>(({ destination, onClose }, ref) => {
   const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [routeCoordinates, setRouteCoordinates] = useState<{ latitude: number; longitude: number }[]>([]);
   const [transportationMode, setTransportationMode] = useState<LocationService.TransportationMode>('walking');
@@ -24,7 +24,7 @@ const MapNavigation = forwardRef<MapView, MapNavigationProps>(({ destination, on
   const [isUsingFallback, setIsUsingFallback] = useState(false);
   const [mapType, setMapType] = useState<'standard' | 'satellite' | 'hybrid'>('standard');
   const { theme } = useTheme();
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<MapboxGL.MapView>(null);
 
   useEffect(() => {
     loadCurrentLocation();
@@ -38,12 +38,12 @@ const MapNavigation = forwardRef<MapView, MapNavigationProps>(({ destination, on
 
   useEffect(() => {
     if (mapRef.current && destination) {
-      mapRef.current.animateToRegion({
-        latitude: destination.coordinates.latitude,
-        longitude: destination.coordinates.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }, 1000);
+      <MapboxGL.Camera
+        zoomLevel={14}
+        centerCoordinate={[destination.coordinates.longitude, destination.coordinates.latitude]}
+        animationMode={'flyTo'}
+        animationDuration={1000}
+      />
     }
   }, [destination]);
 
@@ -126,63 +126,36 @@ const MapNavigation = forwardRef<MapView, MapNavigationProps>(({ destination, on
 
   return (
     <View style={styles.container}>
-      <MapView
+      <MapboxGL.MapView
         ref={mapRef}
-        provider={Platform.OS === 'ios' ? PROVIDER_DEFAULT : PROVIDER_GOOGLE}
         style={styles.map}
-        initialRegion={{
-          latitude: destination.coordinates.latitude,
-          longitude: destination.coordinates.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-        mapType={mapType}
-        showsUserLocation
-        showsMyLocationButton
-        showsCompass
-        showsScale
-        showsTraffic
-        pitchEnabled
-        rotateEnabled
-        showsBuildings
-        showsIndoors
-        showsIndoorLevelPicker
-        showsPointsOfInterest
+        userTrackingMode={MapboxGL.UserTrackingModes.Follow}
       >
+        <MapboxGL.Camera
+          zoomLevel={14}
+          centerCoordinate={[destination.coordinates.longitude, destination.coordinates.latitude]}
+          animationMode={'flyTo'}
+          animationDuration={1000}
+        />
+        <MapboxGL.UserLocation visible={true} />
+
         {/* Current Location Marker */}
-        <Marker
-          coordinate={currentLocation}
-          title="Your Location"
-          pinColor={theme.primary}
-        >
-          <View style={styles.currentLocationMarker}>
-            <View style={[styles.currentLocationPulse, { backgroundColor: theme.primary }]} />
-            <View style={[styles.currentLocationDot, { backgroundColor: theme.primary }]} />
-          </View>
-        </Marker>
+        <MapboxGL.PointAnnotation
+          id="currentLocation"
+          coordinate={[currentLocation.longitude, currentLocation.latitude]}
+        />
 
         {/* Destination Marker */}
-        <Marker
-          coordinate={{
-            latitude: destination.coordinates.latitude,
-            longitude: destination.coordinates.longitude,
-          }}
-          title={destination.name}
-          description={destination.description}
-          pinColor={theme.error}
-        >
-          <View style={styles.destinationMarker}>
-            <Ionicons name="location" size={24} color={theme.error} />
-          </View>
-        </Marker>
+        <MapboxGL.PointAnnotation
+          id="destination"
+          coordinate={[destination.coordinates.longitude, destination.coordinates.latitude]}
+        />
 
         {/* Navigation Path */}
-        <Polyline
-          coordinates={routeCoordinates}
-          strokeWidth={4}
-          strokeColor={isUsingFallback ? theme.gray : theme.primary}
-        />
-      </MapView>
+        <MapboxGL.ShapeSource id="routeSource" shape={{ type: 'LineString', coordinates: routeCoordinates.map(coord => [coord.longitude, coord.latitude]) }}>
+          <MapboxGL.LineLayer id="routeLayer" style={{ lineColor: theme.primary, lineWidth: 4 }} />
+        </MapboxGL.ShapeSource>
+      </MapboxGL.MapView>
 
       {/* Map Controls */}
       <View style={styles.controlsContainer}>
